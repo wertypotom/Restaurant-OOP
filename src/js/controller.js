@@ -12,8 +12,13 @@ const controlRecepies = async () => {
 
     if (!id) return
 
+    // update results to mark selected
+    resultsView.update(model.getSearhResulPage())
+
+    // render spinner on recipe loading
     recipeView.renderSpinner()
 
+    // load recipes
     await model.loadRecipe(id)
 
     recipeView.render(model.state.recipe)
@@ -34,7 +39,7 @@ const controlSearchResults = async () => {
     await model.loadSeatchResults(query)
 
     // render results
-    resultsView.render(model.getSearhResulPage(1))
+    resultsView.render(model.getSearhResulPage())
 
     // render pagination
     paginationView.render(model.state.search)
@@ -51,9 +56,18 @@ const controlPagination = (page) => {
   paginationView.render(model.state.search)
 }
 
+const controlServings = (newServings) => {
+  // update servings
+  model.updateServings(newServings)
+
+  // update recipe view
+  // recipeView.render(model.state.recipe)
+  recipeView.update(model.state.recipe)
+}
 
 const init = () => {
   recipeView.addHandlerRender(controlRecepies)
+  recipeView.addHandlerUpdateServings(controlServings)
   searchView.addHandlerSearch(controlSearchResults)
   paginationView.addHandlerClick(controlPagination)
 }

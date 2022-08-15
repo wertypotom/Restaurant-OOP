@@ -61,3 +61,13 @@ export const getSearhResulPage = (page = state.search.page) => {
 
     return state.search.results.slice(start, end)
 }
+
+export const updateServings = (servingsNum) => {
+    state.recipe.ingredients.forEach(ingredient => {
+        ingredient.quantity = ingredient.quantity * servingsNum / state.recipe.servings
+
+        // newQuant = oldQt * newServings / oldServings
+    })
+
+    state.recipe.servings = servingsNum
+}
