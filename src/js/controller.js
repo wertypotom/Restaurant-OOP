@@ -5,6 +5,7 @@ import recipeView from './views/recipeView';
 import searchView from './views/searchView';
 import resultsView from './views/resultsView';
 import paginationView from './views/paginationView';
+import bookMarksView from './views/bookMarksView';
 
 const controlRecepies = async () => {
   try {
@@ -20,6 +21,9 @@ const controlRecepies = async () => {
 
     // load recipes
     await model.loadRecipe(id)
+
+    // update bookmark on recipe rendering 
+    bookMarksView.update(model.state.bookmarks)
 
     recipeView.render(model.state.recipe)
   } catch (error) {
@@ -65,11 +69,31 @@ const controlServings = (newServings) => {
   recipeView.update(model.state.recipe)
 }
 
+const addBookmark = () => {
+  if (!model.state.recipe.bookmarked) {
+    model.addBookmark(model.state.recipe)
+  } else {
+    model.removeBookmark(model.state.recipe.id)
+  }
+
+  // update recipe view
+  recipeView.update(model.state.recipe)
+
+  // render bookmarks in bookmark panel
+  bookMarksView.render(model.state.bookmarks)
+}
+
+const controlBookmarks = () => {
+  bookMarksView.render(model.state.bookmarks)
+}
+
 const init = () => {
   recipeView.addHandlerRender(controlRecepies)
   recipeView.addHandlerUpdateServings(controlServings)
+  recipeView.addHandlerAddBookmark(addBookmark)
   searchView.addHandlerSearch(controlSearchResults)
   paginationView.addHandlerClick(controlPagination)
+  bookMarksView.addHandlerRender(controlBookmarks)
 }
 
 init()

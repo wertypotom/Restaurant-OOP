@@ -9,6 +9,7 @@ export const state = {
         resultsPerPage: RES_PER_PAGE,
         page: 1
     },
+    bookmarks: []
 };
 
 export const loadRecipe = async id => {
@@ -27,6 +28,13 @@ export const loadRecipe = async id => {
             servings: recipe.servings,
             publisher: recipe.publisher,
         };
+
+        // check if recipe is already in bookmarks
+        if (state.bookmarks.some(recipe => recipe.id === id)) {
+            state.recipe.bookmarked = true
+        } else {
+            state.recipe.bookmarked = false
+        }
     } catch (error) {
         throw error
     }
@@ -48,6 +56,7 @@ export const loadSeatchResults = async (query) => {
                 publisher: rec.publisher,
             }
         })
+        state.search.page = 1
     } catch (error) {
         throw error
     }
@@ -70,4 +79,46 @@ export const updateServings = (servingsNum) => {
     })
 
     state.recipe.servings = servingsNum
+}
+
+const presistBookmarks = () => {
+    localStorage.setItem('bookmarks', JSON.stringify(state.bookmarks))
+}
+
+export const addBookmark = (recipe) => {
+    state.bookmarks.push(recipe)
+
+    // mark current recipe as bookmarked
+    if (recipe.id === state.recipe.id) {
+        state.recipe.bookmarked = true
+    }
+
+    presistBookmarks()
+}
+
+export const removeBookmark = (recipeId) => {
+    const index = state.bookmarks.findIndex(b => b.id === recipeId)
+
+    state.bookmarks.splice(index, 1)
+
+    // unmark current recipe
+    if (recipeId === state.recipe.id) {
+        state.recipe.bookmarked = false
+    }
+
+    presistBookmarks()
+}
+
+const init = () => {
+    const data = localStorage.getItem('bookmarks')
+
+    if (data) {
+        state.bookmarks = JSON.parse(data)
+    }
+}
+
+init()
+
+const clearBookmarks = () => {
+    localStorage.clear('bookmarks')
 }
