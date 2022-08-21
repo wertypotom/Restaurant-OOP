@@ -1,5 +1,5 @@
-import { API_URL, RES_PER_PAGE } from './config';
-import { getJSON } from './helpers';
+import { API_KEY, API_URL, RES_PER_PAGE } from './config';
+import { createRecipeData, AJAX } from './helpers';
 
 export const state = {
     recipe: {},
@@ -14,20 +14,9 @@ export const state = {
 
 export const loadRecipe = async id => {
     try {
-        const data = await getJSON(`${API_URL}/${id}`)
+        const data = await AJAX(`${API_URL}/${id}?key=${API_KEY}`)
+        state.recipe = createRecipeData(data)
 
-        const { recipe } = data.data;
-
-        state.recipe = {
-            id: recipe.id,
-            title: recipe.title,
-            imageUrl: recipe.image_url,
-            cookingTime: recipe.cooking_time,
-            ingredients: recipe.ingredients,
-            sourceUrl: recipe.source_url,
-            servings: recipe.servings,
-            publisher: recipe.publisher,
-        };
 
         // check if recipe is already in bookmarks
         if (state.bookmarks.some(recipe => recipe.id === id)) {
@@ -44,7 +33,7 @@ export const loadRecipe = async id => {
 export const loadSeatchResults = async (query) => {
     try {
         state.search.query = query
-        const data = await getJSON(`${API_URL}?search=${query}`)
+        const data = await AJAX(`${API_URL}?search=${query}&key=${API_KEY}`)
 
         const { recipes } = data.data
 
@@ -54,6 +43,7 @@ export const loadSeatchResults = async (query) => {
                 title: rec.title,
                 imageUrl: rec.image_url,
                 publisher: rec.publisher,
+                ...(rec.key && { key: rec.key })
             }
         })
         state.search.page = 1
@@ -108,6 +98,44 @@ export const removeBookmark = (recipeId) => {
 
     presistBookmarks()
 }
+
+export const uploadRecipe = async (recipe) => {
+    try {
+        const ingArr = Object.entries(recipe)
+            .filter(entry => {
+                return entry[0].startsWith('ingredient') && !!entry[1]
+            })
+            .map(ing => {
+                const ingArray = ing[1].split(',').map(el => el.trim())
+
+                if (ingArray.length < 3) {
+                    throw new Error('Wrong ingredient format. Please use correct format')
+                }
+
+                const [quantity, unit, description] = ingArray
+
+                return { quantity: quantity ? +quantity : null, unit, description }
+            })
+
+        const newRecipe = {
+            title: recipe.title,
+            source_url: recipe.sourceUrl,
+            image_url: recipe.image,
+            publisher: recipe.publisher,
+            cooking_time: +recipe.cookingTime,
+            servings: +recipe.servings,
+            ingredients: ingArr
+        }
+
+        const data = await AJAX(`${API_URL}?key=${API_KEY}`, newRecipe)
+        state.recipe = createRecipeData(data)
+        addBookmark(state.recipe)
+    } catch (error) {
+        throw (error)
+    }
+
+}
+
 
 const init = () => {
     const data = localStorage.getItem('bookmarks')

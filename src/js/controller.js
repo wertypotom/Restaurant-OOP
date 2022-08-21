@@ -6,6 +6,8 @@ import searchView from './views/searchView';
 import resultsView from './views/resultsView';
 import paginationView from './views/paginationView';
 import bookMarksView from './views/bookMarksView';
+import addRecipeView from './views/addRecipeView';
+import { MODAL_CLOSE_SEC } from './config';
 
 const controlRecepies = async () => {
   try {
@@ -87,6 +89,33 @@ const controlBookmarks = () => {
   bookMarksView.render(model.state.bookmarks)
 }
 
+const controlAddRecipe = async (recipe) => {
+  try {
+    addRecipeView.renderSpinner()
+
+    // upload recipe data
+    await model.uploadRecipe(recipe)
+
+    // render recipe on page
+    recipeView.render(model.state.recipe)
+
+    // success message
+    addRecipeView.renderMessage()
+
+    // render bookmarks 
+    controlBookmarks()
+
+    // Change id in url
+    window.history.pushState(null, '', `#${model.state.recipe.id}`)
+
+    setTimeout(() => {
+      addRecipeView.toggleWindow()
+    }, MODAL_CLOSE_SEC * 1000)
+  } catch (error) {
+    addRecipeView.renderError(error)
+  }
+}
+
 const init = () => {
   recipeView.addHandlerRender(controlRecepies)
   recipeView.addHandlerUpdateServings(controlServings)
@@ -94,6 +123,7 @@ const init = () => {
   searchView.addHandlerSearch(controlSearchResults)
   paginationView.addHandlerClick(controlPagination)
   bookMarksView.addHandlerRender(controlBookmarks)
+  addRecipeView.addHandlerUpload(controlAddRecipe)
 }
 
 init()
